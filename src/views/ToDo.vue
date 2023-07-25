@@ -9,33 +9,88 @@
         append-icon="mdi-plus"
         hide-details
         clearable
-    >
-    </v-text-field>
+    ></v-text-field>
+
     <v-list class="pt-0" flat>
-      <!-- v-list-subheader>General</v-list-subheader -->
-      <div v-for="task in tasks" :key="task.id">
-        <v-list-item @click="doneTask(task.id)" :class="{'blue lighten-5': task.done}">
-          <template v-slot:default>
-            <v-list-item-action start>
-              <v-checkbox :input-value="task.done" color="primary"></v-checkbox>
-            </v-list-item-action>
+      <v-list-item v-for="task in tasks" :key="task.id" @click="doneTask(task.id)" :class="{'blue lighten-5': task.done}">
+        <v-list-item-action>
+          <v-checkbox :input-value="task.done" color="primary"></v-checkbox>
+        </v-list-item-action>
 
-            <v-list-item-content>
-              <v-list-item-title :class="{'text-decoration-line-through': task.done}">
-                {{ task.title }}
-              </v-list-item-title>
-            </v-list-item-content>
+        <v-list-item-content>
+          <v-list-item-title :class="{'text-decoration-line-through': task.done}">
+            {{ task.title }}
+          </v-list-item-title>
+          <v-list-item-subtitle class="text-right" v-if="task.dueDate">
+            <v-icon class="mr-2">mdi-calendar</v-icon>{{ task.dueDate }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
 
-            <v-list-item-action>
-              <v-btn @click.stop="deleteTask(task.id)" icon>
-                <v-icon color="primary lighten-1">mdi-delete</v-icon>
+        <v-list-item-action>
+          <v-menu offset-y>
+            <template v-slot:activator="{ on }">
+              <v-btn v-on="on" icon>
+                <v-icon color="primary lighten-1">mdi-dots-vertical</v-icon>
               </v-btn>
-            </v-list-item-action>
-          </template>
-        </v-list-item>
-        <v-divider></v-divider>
-      </div>
+            </template>
+
+            <v-list>
+              <v-list-item @click="editTask(task.id)">
+                <v-list-item-icon>
+                  <v-icon color="primary lighten-1">mdi-pencil</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  Edit
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click="openDueDateDialog(task.id)">
+                <v-list-item-icon>
+                  <v-icon color="primary lighten-1">mdi-calendar-clock</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  Due Date
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click="deleteTask(task.id)">
+                <v-list-item-icon>
+                  <v-icon color="primary lighten-1">mdi-delete</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  Delete
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item @click="sortTasks()">
+                <v-list-item-icon>
+                  <v-icon color="primary lighten-1">mdi-sort</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  Sort
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-list-item-action>
+      </v-list-item>
+      <v-divider></v-divider>
     </v-list>
+
+    <!-- Due Date Dialog -->
+    <v-dialog v-model="showDueDateDialog" max-width="290">
+      <v-card>
+        <v-card-title class="headline">Select Due Date</v-card-title>
+        <v-card-text>
+          <v-date-picker v-model="selectedDueDate" scrollable></v-date-picker>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="saveDueDate">Save</v-btn>
+          <v-btn color="secondary" @click="closeDueDateDialog">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -46,22 +101,14 @@ export default {
     return {
       newTaskTitle: '',
       tasks: [
-        {
-          id: 1,
-          title: 'Wake up',
-          done: false,
-        },
-        {
-          id: 2,
-          title: 'Get Bananas',
-          done: false,
-        },
-        {
-          id: 3,
-          title: 'Eat Bananas',
-          done: false,
-        },
+        { id: 1, title: 'Wake up', done: false, dueDate: null },
+        { id: 2, title: 'Get Bananas', done: false, dueDate: null },
+        { id: 3, title: 'Eat Bananas', done: false, dueDate: null },
+        // Add more tasks here...
       ],
+      showDueDateDialog: false,
+      selectedDueDate: null,
+      taskIdForDueDate: null,
     };
   },
   methods: {
@@ -70,6 +117,7 @@ export default {
         id: Date.now(),
         title: this.newTaskTitle,
         done: false,
+        dueDate: null,
       };
       this.tasks.push(newTask);
       this.newTaskTitle = '';
@@ -83,6 +131,30 @@ export default {
     deleteTask(id) {
       this.tasks = this.tasks.filter((task) => task.id !== id);
     },
+    openDueDateDialog(taskId) {
+      this.taskIdForDueDate = taskId;
+      this.selectedDueDate = this.tasks.find((task) => task.id === taskId)?.dueDate || null;
+      this.showDueDateDialog = true;
+    },
+    closeDueDateDialog() {
+      this.showDueDateDialog = false;
+    },
+    saveDueDate() {
+      const task = this.tasks.find((task) => task.id === this.taskIdForDueDate);
+      if (task) {
+        task.dueDate = this.selectedDueDate;
+      }
+      this.showDueDateDialog = false;
+    },
+    // ... (existing methods)
   },
 };
 </script>
+
+<style>
+/* Add any custom styles here */
+.text-right {
+  text-align: right;
+  margin-bottom: 15px;
+}
+</style>
