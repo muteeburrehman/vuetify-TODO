@@ -12,18 +12,25 @@
     ></v-text-field>
 
     <v-list class="pt-0" flat>
-      <v-list-item v-for="task in tasks" :key="task.id" @click="doneTask(task.id)" :class="{'blue lighten-5': task.done}">
+      <v-list-item
+          v-for="task in sortedTasks"
+          :key="task.id"
+          @click="doneTask(task.id)"
+          :class="{'blue lighten-5': task.done}"
+      >
         <v-list-item-action>
           <v-checkbox :input-value="task.done" color="primary"></v-checkbox>
         </v-list-item-action>
 
         <v-list-item-content>
-          <v-list-item-title :class="{'text-decoration-line-through': task.done}">
-            {{ task.title }}
-          </v-list-item-title>
-          <v-list-item-subtitle class="text-right" v-if="task.dueDate">
-            <v-icon class="mr-2">mdi-calendar</v-icon>{{ task.dueDate }}
-          </v-list-item-subtitle>
+          <div class="task-details">
+            <v-list-item-title :class="{'text-decoration-line-through': task.done}">
+              {{ task.title }}
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-right" v-if="task.dueDate">
+              <v-icon class="mr-2">mdi-calendar</v-icon>{{ task.dueDate }}
+            </v-list-item-subtitle>
+          </div>
         </v-list-item-content>
 
         <v-list-item-action>
@@ -62,7 +69,7 @@
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item @click="sortTasks()">
+              <v-list-item @click="openSortTasksDialog">
                 <v-list-item-icon>
                   <v-icon color="primary lighten-1">mdi-sort</v-icon>
                 </v-list-item-icon>
@@ -91,6 +98,43 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Edit Task Dialog -->
+    <v-dialog v-model="showEditTaskDialog" max-width="290">
+      <v-card>
+        <v-card-title class="headline">Edit Task</v-card-title>
+        <v-card-text>
+          <v-text-field
+              v-model="editedTaskTitle"
+              outlined
+              label="Edit Task"
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="saveEditedTask">Save</v-btn>
+          <v-btn color="secondary" @click="closeEditTaskDialog">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Sort Tasks Dialog -->
+    <v-dialog v-model="showSortTasksDialog" max-width="290">
+      <v-card>
+        <v-card-title class="headline">Sort Tasks</v-card-title>
+        <v-card-text>
+          <v-radio-group v-model="sortAscending">
+            <v-radio :label="ascendingLabel" :value="true"></v-radio>
+            <v-radio :label="descendingLabel" :value="false"></v-radio>
+          </v-radio-group>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="sortTasks">Save</v-btn>
+          <v-btn color="secondary" @click="closeSortTasksDialog">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -109,7 +153,27 @@ export default {
       showDueDateDialog: false,
       selectedDueDate: null,
       taskIdForDueDate: null,
+      showEditTaskDialog: false,
+      editedTaskTitle: '',
+      editedTaskId: null,
+      showSortTasksDialog: false,
+      sortAscending: true, // Default sorting direction is ascending
     };
+  },
+  computed: {
+    ascendingLabel() {
+      return 'Ascending';
+    },
+    descendingLabel() {
+      return 'Descending';
+    },
+    sortedTasks() {
+      if (this.sortAscending) {
+        return this.tasks.slice().sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        return this.tasks.slice().sort((a, b) => b.title.localeCompare(a.title));
+      }
+    },
   },
   methods: {
     addTask() {
@@ -146,7 +210,38 @@ export default {
       }
       this.showDueDateDialog = false;
     },
-    // ... (existing methods)
+    editTask(taskId) {
+      const task = this.tasks.find((task) => task.id === taskId);
+      if (task) {
+        this.editedTaskId = task.id;
+        this.editedTaskTitle = task.title;
+        this.showEditTaskDialog = true;
+      }
+    },
+    closeEditTaskDialog() {
+      this.showEditTaskDialog = false;
+    },
+    saveEditedTask() {
+      const task = this.tasks.find((task) => task.id === this.editedTaskId);
+      if (task) {
+        task.title = this.editedTaskTitle;
+      }
+      this.showEditTaskDialog = false;
+    },
+    openSortTasksDialog() {
+      this.showSortTasksDialog = true;
+    },
+    closeSortTasksDialog() {
+      this.showSortTasksDialog = false;
+    },
+    sortTasks() {
+      this.showSortTasksDialog = false; // Close the sort dialog
+      if (this.sortAscending) {
+        this.tasks.sort((a, b) => a.title.localeCompare(b.title));
+      } else {
+        this.tasks.sort((a, b) => b.title.localeCompare(a.title));
+      }
+    },
   },
 };
 </script>
@@ -155,6 +250,12 @@ export default {
 /* Add any custom styles here */
 .text-right {
   text-align: right;
-  margin-bottom: 15px;
+  margin-bottom: -4px;
+}
+
+.task-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>
