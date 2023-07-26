@@ -14,7 +14,7 @@
       <!-- Title and Date/Time container -->
       <div class="title-date-time-container">
         <!-- Vuetify Todo title -->
-        <span class="v-list-item-title title">Vuetify Todo</span>
+        <span class="v-list-item-title title" style="margin-top: 8px;">Vuetify Todo</span>
 
         <!-- Date and Time -->
         <span class="current-date-time">{{ currentDateTime }}</span>
@@ -22,22 +22,14 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn icon>
-        <v-icon>mdi-magnify</v-icon>
-      </v-btn>
 
-      <v-btn icon>
-        <v-icon>mdi-heart</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>mdi-dots-vertical</v-icon>
-      </v-btn>
     </v-app-bar>
 
     <!-- Your content goes here -->
     <v-main>
-      <router-view></router-view>
+      <v-container>
+        <router-view></router-view>
+      </v-container>
     </v-main>
 
     <v-navigation-drawer v-model="drawer" app>
@@ -59,36 +51,7 @@
 </template>
 
 <script>
-import {
-  VApp,
-  VNavigationDrawer,
-  VAppBar,
-  VMain,
-  VList,
-  VListItem,
-  VListItemContent,
-  VListItemTitle,
-  VDivider,
-  VIcon,
-  VAppbarNavIcon,
-  VSpacer,
-} from 'vuetify/lib';
-
 export default {
-  components: {
-    VApp,
-    VNavigationDrawer,
-    VAppBar,
-    VMain,
-    VList,
-    VListItem,
-    VListItemContent,
-    VListItemTitle,
-    VDivider,
-    VIcon,
-    VAppbarNavIcon,
-    VSpacer,
-  },
   data: () => ({
     drawer: null,
     items: [
@@ -104,6 +67,7 @@ export default {
       },
     ],
     currentDateTime: null,
+    searchText: '',
   }),
   mounted() {
     // Call the function initially to set the date and time immediately
