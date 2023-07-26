@@ -1,5 +1,26 @@
 <template>
   <div class="home">
+    <!-- Add search icon to toggle search bar -->
+    <v-btn icon @click="toggleSearch">
+      <v-icon>mdi-magnify</v-icon>
+    </v-btn>
+
+    <!-- Search bar
+    append-icon="mdi-close" -->
+    <v-text-field
+        v-if="showSearchBar"
+        v-model="searchQuery"
+        @keyup.enter="filterTasks"
+        @input="filterTasks"
+        class="pa-3"
+        outlined
+        label="Search Tasks"
+
+        hide-details
+        clearable
+    ></v-text-field>
+
+    <!-- Add Todo -->
     <v-text-field
         v-model="newTaskTitle"
         @keyup.enter="addTask"
@@ -11,17 +32,20 @@
         clearable
     ></v-text-field>
 
+    <!-- Task list -->
     <v-list class="pt-0" flat>
       <v-list-item
-          v-for="task in sortedTasks"
+          v-for="task in filteredTasks || sortedTasks"
           :key="task.id"
           @click="doneTask(task.id)"
           :class="{'blue lighten-5': task.done}"
       >
+        <!-- Checkbox for task completion -->
         <v-list-item-action>
           <v-checkbox :input-value="task.done" color="primary"></v-checkbox>
         </v-list-item-action>
 
+        <!-- Task details -->
         <v-list-item-content>
           <div class="task-details">
             <v-list-item-title :class="{'text-decoration-line-through': task.done}">
@@ -33,6 +57,7 @@
           </div>
         </v-list-item-content>
 
+        <!-- Task actions -->
         <v-list-item-action>
           <v-menu offset-y>
             <template v-slot:activator="{ on }">
@@ -42,6 +67,7 @@
             </template>
 
             <v-list>
+              <!-- Edit Task -->
               <v-list-item @click="editTask(task.id)">
                 <v-list-item-icon>
                   <v-icon color="primary lighten-1">mdi-pencil</v-icon>
@@ -51,6 +77,7 @@
                 </v-list-item-content>
               </v-list-item>
 
+              <!-- Due Date Dialog -->
               <v-list-item @click="openDueDateDialog(task.id)">
                 <v-list-item-icon>
                   <v-icon color="primary lighten-1">mdi-calendar-clock</v-icon>
@@ -60,6 +87,7 @@
                 </v-list-item-content>
               </v-list-item>
 
+              <!-- Delete Task -->
               <v-list-item @click="deleteTask(task.id)">
                 <v-list-item-icon>
                   <v-icon color="primary lighten-1">mdi-delete</v-icon>
@@ -69,6 +97,7 @@
                 </v-list-item-content>
               </v-list-item>
 
+              <!-- Sort Tasks Dialog -->
               <v-list-item @click="openSortTasksDialog">
                 <v-list-item-icon>
                   <v-icon color="primary lighten-1">mdi-sort</v-icon>
@@ -158,6 +187,9 @@ export default {
       editedTaskId: null,
       showSortTasksDialog: false,
       sortAscending: true, // Default sorting direction is ascending
+      showSearchBar: false,
+      searchQuery: '',
+      filteredTasks: null,
     };
   },
   computed: {
@@ -177,6 +209,9 @@ export default {
   },
   methods: {
     addTask() {
+      if (!this.newTaskTitle.trim()) {
+        return;
+      }
       let newTask = {
         id: Date.now(),
         title: this.newTaskTitle,
@@ -242,10 +277,26 @@ export default {
         this.tasks.sort((a, b) => b.title.localeCompare(a.title));
       }
     },
+    toggleSearch() {
+      this.showSearchBar = !this.showSearchBar;
+      if (!this.showSearchBar) {
+        this.searchQuery = '';
+        this.filteredTasks = null;
+      }
+    },
+    filterTasks() {
+      const query = this.searchQuery.trim().toLowerCase();
+      if (!query) {
+        this.filteredTasks = null;
+      } else {
+        this.filteredTasks = this.tasks.filter(task =>
+            task.title.toLowerCase().includes(query)
+        );
+      }
+    },
   },
 };
 </script>
-
 <style>
 /* Add any custom styles here */
 .text-right {
